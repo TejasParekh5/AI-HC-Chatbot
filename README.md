@@ -46,9 +46,9 @@ The system is organized into several key modules:
    
 2. **Create and activate a virtual environment**
   python -m venv venv
-  # On Windows:
+  _On Windows:_
   venv\Scripts\activate
-  # On macOS/Linux:
+  _On macOS/Linux:_
   source venv/bin/activate
 
 3. **Create and activate a virtual environment**
