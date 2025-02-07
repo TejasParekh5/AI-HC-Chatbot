@@ -35,3 +35,55 @@ The system is organized into several key modules:
 4. **Response Generation Module:** Uses a pre-trained GPT-2 model (via Hugging Face Transformers) to generate responses for general queries.
 5. **Disclaimer Module:** Appends a standardized medical disclaimer to every response.
 6. **User Interface Module:** Provides a clean, accessible interface through Streamlit.
+
+## Installation
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/your-username/ai-healthcare-chatbot.git
+   cd ai-healthcare-chatbot
+   
+2. **Create and activate a virtual environment**
+  python -m venv venv
+  # On Windows:
+  venv\Scripts\activate
+  # On macOS/Linux:
+  source venv/bin/activate
+
+3. **Create and activate a virtual environment**
+  pip install -r requirements.txt
+
+4. **Download the necessary NLTK data (if not already available)**
+   python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+
+## Usage
+Start the chatbot application using Streamlit:
+*streamlit run app.py*
+Then, open your browser and navigate to the local URL (typically http://localhost:8501) to interact with the chatbot.
+
+## Literature Survey
+The development of this chatbot is informed by current research in AI and healthcare, including:
+  1.Conversational Agents in Healthcare: Systematic reviews that discuss the role of chatbots in enhancing patient engagement and reducing wait times.
+  2.Context-Aware Chatbots: Studies highlighting the effectiveness of transformer-based models like GPT-2 in generating human-like, context-aware responses for healthcare applications 
+  3.Challenges in Healthcare Chatbots: Research identifying limitations such as scalability, context maintenance, and privacy concerns in existing systems 
+
+## Contributing
+Contributions to improve the chatbot are welcome! To contribute:
+
+Fork the repository.
+Create a new branch:
+*git checkout -b feature/your-feature-name*
+Commit your changes:
+*git commit -m "Add feature or fix bug"*
+Push your branch:
+*git push origin feature/your-feature-name*
+Open a pull request for review.
+
+## License
+This project is licensed under the MIT License.
+
+## Acknowledgements
+Project Mentor: Jay Rathod, for invaluable guidance and support.
+TechSaksham: For providing the platform and resources during the AICTE Internship on AI.
+Open-Source Community: Gratitude to the developers behind Streamlit, Hugging Face Transformers, and NLTK for their excellent libraries.
