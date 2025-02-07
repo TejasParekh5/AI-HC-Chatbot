@@ -45,21 +45,29 @@ The system is organized into several key modules:
    cd ai-healthcare-chatbot
    
 2. **Create and activate a virtual environment**
-  python -m venv venv
-  _On Windows:_
+
+   ```bash
+   python -m venv venv
+   
+  *_On Windows:_*
   venv\Scripts\activate
-  _On macOS/Linux:_
+  
+  *_On macOS/Linux:_*
   source venv/bin/activate
 
-3. **Create and activate a virtual environment**
-  pip install -r requirements.txt
+4. **Create and activate a virtual environment**
+   ```bash
+   pip install -r requirements.txt
 
-4. **Download the necessary NLTK data (if not already available)**
+5. **Download the necessary NLTK data (if not already available)**
+   ```bash
    python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 
 ## Usage
 Start the chatbot application using Streamlit:
-*streamlit run app.py*
+
+streamlit run app.py
+
 Then, open your browser and navigate to the local URL (typically http://localhost:8501) to interact with the chatbot.
 
 ## Literature Survey
