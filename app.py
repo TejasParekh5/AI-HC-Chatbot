@@ -1,87 +1,107 @@
 import streamlit as st
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-import re
+import requests
 
-# Download necessary NLTK data (only the first time)
-nltk.download('punkt')
-nltk.download('stopwords')
-
-# Load a pre-trained Hugging Face model suitable for medical queries
-model_name = "gpt2"  # Using GPT-2 model as an alternative
-model = AutoModelForCausalLM.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-chatbot = pipeline("text-generation", model=model, tokenizer=tokenizer)
-
-# Define a medical disclaimer to be appended to all responses.
-MEDICAL_DISCLAIMER = ("\n\n*Disclaimer: I am not a licensed medical professional. "
-                      "For medical emergencies or serious health concerns, please seek professional help immediately.*")
-
-# Define a function to preprocess user input (e.g. lowercasing, removing stopwords)
+GEMINI_API_KEY = "AIzaSyAp8amnVeQDs-gchdS4QLvfQtwrp8UcxVc"
 
 
-def preprocess_text(text):
-    # Lowercase and remove non-alphanumeric characters (except spaces)
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text.lower())
-    tokens = word_tokenize(text)
-    filtered_tokens = [
-        word for word in tokens if word not in stopwords.words('english')]
-    return ' '.join(filtered_tokens)
+def generate_prompt(user_input):
+    return (
+        "You are a helpful and knowledgeable healthcare assistant. "
+        "For any symptoms or health concerns described by the user, provide:\n"
+        "- Possible common causes (if appropriate)\n"
+        "- Step-by-step home care advice and precautions\n"
+        "- Medications that may help (if safe to suggest over-the-counter options)\n"
+        "- Clear guidance on when to seek professional medical attention\n"
+        "Always be compassionate, clear, and concise. Do not diagnose, but give practical next steps.\n"
+        f"User: {user_input}\nAssistant:"
+    )
 
-# Define healthcare-specific response logic.
+
+def call_chatbot_api(user_input):
+    prompt = generate_prompt(user_input)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt}
+                ]
+            }
+        ]
+    }
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        if response.status_code == 200:
+            candidates = response.json().get("candidates", [])
+            if candidates and "content" in candidates[0] and "parts" in candidates[0]["content"]:
+                return candidates[0]["content"]["parts"][0]["text"].strip()
+            else:
+                return "Sorry, I couldn't generate a response."
+        else:
+            return f"Sorry, there was an error processing your request. (Status code: {response.status_code})"
+    except Exception as e:
+        return f"Sorry, there was an error connecting to the Gemini API: {e}"
 
 
-def healthcare_chatbot(user_input):
-    processed_input = preprocess_text(user_input)
-
-    # Rule-based responses for common healthcare queries.
-    if "emergency" in processed_input or "chest pain" in processed_input or "severe" in processed_input:
-        return ("It sounds like you might be describing a potentially serious situation. "
-                "If this is an emergency, please call your local emergency services immediately." + MEDICAL_DISCLAIMER)
-    elif "symptom" in processed_input or "fever" in processed_input or "cough" in processed_input:
-        return ("It seems like you're experiencing some symptoms. "
-                "While I can provide general information, please note that I'm not a substitute for professional medical advice. "
-                "If your symptoms worsen or concern you, consider consulting a healthcare provider." + MEDICAL_DISCLAIMER)
-    elif "appointment" in processed_input:
-        return ("I can help guide you through the appointment process. "
-                "Would you like me to assist in finding nearby clinics or scheduling an appointment? Please provide your location details." + MEDICAL_DISCLAIMER)
-    elif "medication" in processed_input or "prescription" in processed_input:
-        return ("It's important to follow your doctor's instructions regarding medication. "
-                "For any changes or concerns, please consult your healthcare provider. " + MEDICAL_DISCLAIMER)
-    elif "mental health" in processed_input or "anxiety" in processed_input:
-        return ("I understand that mental health is very important. "
-                "If you are experiencing distress or need someone to talk to, please consider reaching out to a trusted professional or a support helpline." + MEDICAL_DISCLAIMER)
-    else:
-        # For other inputs, use the Hugging Face model to generate a response.
-        # We include the medical disclaimer in the prompt to bias the generation.
-        prompt = user_input + \
-            "\n\nPlease provide detailed and compassionate information in response."
-        response = chatbot(prompt, max_length=300, num_return_sequences=1)[
-            0]['generated_text']
-
-        # Append the disclaimer to the generated text.
-        return response + MEDICAL_DISCLAIMER
-
-# Streamlit web app interface.
+def healthCare_chatbot(user_input):
+    return call_chatbot_api(user_input)
 
 
 def main():
-    st.title("Healthcare Assistant Chatbot")
+    st.set_page_config(page_title="Healthcare Assistant ChatBot",
+                       page_icon="💬", layout="centered")
+    st.title("💬 Healthcare Assistant ChatBot")
     st.markdown(
-        "**Note:** I am a virtual assistant and not a substitute for professional medical advice.")
+        "**Disclaimer:** This chatbot is for informational purposes only and does not replace professional medical advice.")
 
-    # Display a simple text input for user queries.
-    user_input = st.text_input("How can I assist you today?", "")
+    # Sidebar with info and disclaimer
+    with st.sidebar:
+        st.header("About")
+        st.write(
+            "This chatbot provides general medical information using an AI language model. "
+            "It is **not** a replacement for professional medical advice, diagnosis, or treatment."
+        )
+        st.write(
+            "For urgent or serious health concerns, always contact a licensed healthcare provider."
+        )
+        st.markdown("---")
+        st.write("Developed for educational and informational purposes only.")
 
-    if st.button("Submit"):
-        if user_input:
-            st.write("**User:**", user_input)
-            response = healthcare_chatbot(user_input)
-            st.write("**Healthcare Assistant:**", response)
-        else:
-            st.write("Please enter a query.")
+    # Conversation history using session state
+    if "history" not in st.session_state:
+        st.session_state.history = []
+
+    st.markdown("### Chat")
+    user_input = st.text_area(
+        "How can I assist you today?", "", height=80, max_chars=500)
+
+    col1, col2 = st.columns([1, 1])
+    submit = col1.button("Submit", use_container_width=True)
+    clear = col2.button("Clear Conversation", use_container_width=True)
+
+    if clear:
+        st.session_state.history = []
+
+    if submit and user_input.strip():
+        with st.spinner("Processing your query, please wait..."):
+            try:
+                response = healthCare_chatbot(user_input)
+            except Exception as e:
+                response = "Sorry, there was an error processing your request."
+                st.error(e)
+        st.session_state.history.append(("User", user_input))
+        st.session_state.history.append(("Healthcare Assistant", response))
+
+    # Display conversation history
+    if st.session_state.history:
+        for speaker, message in st.session_state.history:
+            if speaker == "User":
+                st.markdown(f"**🧑 {speaker}:** {message}")
+            else:
+                st.markdown(f"**🤖 {speaker}:** {message}")
 
 
 if __name__ == "__main__":
